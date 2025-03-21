@@ -14,7 +14,16 @@
 import { Authentication, GateApiV4Auth, HttpBasicAuth, HttpBearerAuth, OAuth, ObjectSerializer } from '../model/models';
 
 import JSONBig from 'json-bigint';
-import globalAxios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
+export interface RequestConfig {
+    url?: string;
+    method?: string;
+    headers?: Record<string, string>;
+    params?: Record<string, string>;
+    auth?: { username: string, password: string };
+    responseType?: 'arraybuffer' | 'document' | 'json' | 'text' | 'stream';
+    data?: any;
+}
 
 export class ApiClient {
     protected _basePath = 'https://api.gateio.ws/api/v4';
@@ -24,19 +33,8 @@ export class ApiClient {
         apiv4: new GateApiV4Auth(),
     };
 
-    constructor(basePath?: string, protected axiosInstance: AxiosInstance = globalAxios) {
+    constructor(basePath?: string) {
         this._basePath = basePath || this._basePath;
-
-        this.axiosInstance.defaults.transformResponse = [
-            (data) => {
-                try {
-                    return JSONBig.parse(data);
-                } catch (error) {
-                    console.error('Failed to parse JSON:', error);
-                    return data;
-                }
-            },
-        ];
     }
 
     set basePath(basePath: string) {
@@ -61,31 +59,49 @@ export class ApiClient {
         auth.secret = secret;
     }
 
-    public applyToRequest(config: AxiosRequestConfig, authSettings: Array<string>): AxiosRequestConfig {
+    public async applyToRequest(config: RequestConfig, authSettings: Array<string>): Promise<RequestConfig> {
         for (const auth of authSettings) {
             const authenticator = this.authentications[auth];
             if (authenticator) {
-                config = authenticator.applyToRequest(config);
+                config = await authenticator.applyToRequest(config);
             }
         }
         return config;
     }
 
     public async request<T>(
-        config: AxiosRequestConfig,
+        config: RequestConfig,
         responseType: string,
         authSettings: Array<string>,
-    ): Promise<{ response: AxiosResponse; body: T }> {
-        return Promise.resolve(config)
-            .then((c) => this.applyToRequest(c, authSettings))
-            .then((c) => {
-                return this.axiosInstance.request(c).then((rsp) => {
-                    let body = rsp.data;
-                    if (responseType.length > 0) {
-                        body = ObjectSerializer.deserialize(rsp.data, responseType);
-                    }
-                    return { response: rsp, body: body };
-                });
-            });
+    ): Promise<{ response: Response; body: T }> {
+        config = await this.applyToRequest(config, authSettings);
+        const response: Response = await this.fetch(config);
+
+        let body = JSONBig.parse(await response.text());
+        if (responseType.length > 0) {
+            body = ObjectSerializer.deserialize(body, responseType);
+        }
+        return {response, body: body};
+    }
+
+    private async fetch(config: RequestConfig): Promise<Response> {
+        let url = config.url;
+        if (config.params) {
+            const params = (config.params instanceof URLSearchParams)
+                ? config.params
+                : new URLSearchParams(config.params);
+            const qs = params.toString();
+            if (qs !== '') {
+                url = `${url}?${qs}`;
+            }
+        }
+
+        const request = new Request(url!, {
+            method: config.method ?? 'GET',
+            headers: config.headers,
+            body: typeof config.data === 'string' ? config.data : JSONBig.stringify(config.data)
+        });
+
+        return fetch(request);
     }
 }

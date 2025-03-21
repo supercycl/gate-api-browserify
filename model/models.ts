@@ -1,3 +1,5 @@
+import { RequestConfig } from "../api/apiClient";
+
 export * from './accountBalance';
 export * from './accountDetail';
 export * from './accountDetailKey';
@@ -241,11 +243,6 @@ export * from './userTotalAmount';
 export * from './withdrawStatus';
 export * from './withdrawalRecord';
 
-import { AxiosRequestConfig } from 'axios';
-import querystring = require('querystring');
-import crypto = require('crypto');
-import { URL } from 'url';
-
 import { AccountBalance } from './accountBalance';
 import { AccountDetail } from './accountDetail';
 import { AccountDetailKey } from './accountDetailKey';
@@ -488,6 +485,7 @@ import { UserSubRelation } from './userSubRelation';
 import { UserTotalAmount } from './userTotalAmount';
 import { WithdrawStatus } from './withdrawStatus';
 import { WithdrawalRecord } from './withdrawalRecord';
+import { bytesToHex, createHash, createHmac, getUTCTimestamp, strToUtf8 } from "../api/utils";
 
 /* tslint:disable:no-unused-variable */
 const primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any', 'bigint'];
@@ -939,14 +937,14 @@ export interface Authentication {
     /**
      * Apply authentication settings to header and query params.
      */
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig;
+    applyToRequest(config: RequestConfig): Promise<RequestConfig>;
 }
 
 export class HttpBasicAuth implements Authentication {
     public username = '';
     public password = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
         config.auth = {
             username: this.username,
             password: this.password,
@@ -958,7 +956,7 @@ export class HttpBasicAuth implements Authentication {
 export class HttpBearerAuth implements Authentication {
     public accessToken: string | (() => string) = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
         if (config && config.headers) {
             const accessToken = typeof this.accessToken === 'function' ? this.accessToken() : this.accessToken;
             config.headers['Authorization'] = 'Bearer ' + accessToken;
@@ -972,12 +970,13 @@ export class ApiKeyAuth implements Authentication {
 
     constructor(private location: string, private paramName: string) {}
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
         if (this.location == 'query') {
+            config.params = config.params ?? {};
             config.params[this.paramName] = this.apiKey;
-        } else if (this.location == 'header' && config && config.headers) {
+        } else if (this.location === 'header' && config && config.headers) {
             config.headers[this.paramName] = this.apiKey;
-        } else if (this.location == 'cookie' && config && config.headers) {
+        } else if (this.location === 'cookie' && config && config.headers) {
             if (config.headers['Cookie']) {
                 config.headers['Cookie'] += '; ' + this.paramName + '=' + encodeURIComponent(this.apiKey);
             } else {
@@ -991,7 +990,7 @@ export class ApiKeyAuth implements Authentication {
 export class OAuth implements Authentication {
     public accessToken = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
         if (config && config.headers) {
             config.headers['Authorization'] = 'Bearer ' + this.accessToken;
         }
@@ -1003,13 +1002,10 @@ export class GateApiV4Auth implements Authentication {
     public key = '';
     public secret = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
-        config.paramsSerializer = function (params) {
-            return querystring.stringify(params);
-        };
-        const timestamp: string = (new Date().getTime() / 1000).toString();
+    async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
+        const timestamp: string = `${getUTCTimestamp()}`;
         const resourcePath: string = new URL(config.url as string).pathname;
-        const queryString: string = unescape(querystring.stringify(config.params));
+        const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
         if (config.data) {
             if (typeof config.data == 'string') {
@@ -1018,9 +1014,14 @@ export class GateApiV4Auth implements Authentication {
                 bodyParam = JSON.stringify(config.data);
             }
         }
-        const hashedPayload = crypto.createHash('sha512').update(bodyParam).digest('hex');
+
+        const hashedPayload = bytesToHex(
+            new Uint8Array(await createHash('SHA-512', strToUtf8(bodyParam)))
+        );
         const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
-        const signature = crypto.createHmac('sha512', this.secret).update(signatureString).digest('hex');
+        const signature = bytesToHex(
+            new Uint8Array(await createHmac('SHA-512', this.secret, signatureString))
+        );
         (<any>Object).assign(config.headers, { KEY: this.key, Timestamp: timestamp, SIGN: signature });
         return config;
     }
