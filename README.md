@@ -1,3 +1,8 @@
+# Overview
+
+* The only goal of this project is to make [gateapi-nodejs](https://github.com/gateio/gateapi-nodejs) work on a browser.
+* Please note that users are responsible for any problems encountered when using this open-source software.
+
 ## gate-api@6.94.0
 
 TypeScript NodeJS client for gate-api.
