@@ -61,11 +61,11 @@ export class ApiClient {
         auth.secret = secret;
     }
 
-    public applyToRequest(config: AxiosRequestConfig, authSettings: Array<string>): AxiosRequestConfig {
+    public async applyToRequest(config: AxiosRequestConfig, authSettings: Array<string>): Promise<AxiosRequestConfig> {
         for (const auth of authSettings) {
             const authenticator = this.authentications[auth];
             if (authenticator) {
-                config = authenticator.applyToRequest(config);
+                config = await authenticator.applyToRequest(config);
             }
         }
         return config;

@@ -1,3 +1,5 @@
+import { isBrowser } from '../utils/utils';
+
 export * from './accountBalance';
 export * from './accountDetail';
 export * from './accountDetailKey';
@@ -243,7 +245,6 @@ export * from './withdrawalRecord';
 
 import { AxiosRequestConfig } from 'axios';
 import querystring = require('querystring');
-import crypto = require('crypto');
 import { URL } from 'url';
 
 import { AccountBalance } from './accountBalance';
@@ -488,6 +489,7 @@ import { UserSubRelation } from './userSubRelation';
 import { UserTotalAmount } from './userTotalAmount';
 import { WithdrawStatus } from './withdrawStatus';
 import { WithdrawalRecord } from './withdrawalRecord';
+import crypto from 'crypto';
 
 /* tslint:disable:no-unused-variable */
 const primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any', 'bigint'];
@@ -939,31 +941,31 @@ export interface Authentication {
     /**
      * Apply authentication settings to header and query params.
      */
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig;
+    applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig>;
 }
 
 export class HttpBasicAuth implements Authentication {
     public username = '';
     public password = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         config.auth = {
             username: this.username,
             password: this.password,
         };
-        return config;
+        return Promise.resolve(config);
     }
 }
 
 export class HttpBearerAuth implements Authentication {
     public accessToken: string | (() => string) = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         if (config && config.headers) {
             const accessToken = typeof this.accessToken === 'function' ? this.accessToken() : this.accessToken;
             config.headers['Authorization'] = 'Bearer ' + accessToken;
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -972,7 +974,7 @@ export class ApiKeyAuth implements Authentication {
 
     constructor(private location: string, private paramName: string) {}
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         if (this.location == 'query') {
             config.params[this.paramName] = this.apiKey;
         } else if (this.location == 'header' && config && config.headers) {
@@ -984,18 +986,18 @@ export class ApiKeyAuth implements Authentication {
                 config.headers['Cookie'] = this.paramName + '=' + encodeURIComponent(this.apiKey);
             }
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
 export class OAuth implements Authentication {
     public accessToken = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         if (config && config.headers) {
             config.headers['Authorization'] = 'Bearer ' + this.accessToken;
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -1003,13 +1005,13 @@ export class GateApiV4Auth implements Authentication {
     public key = '';
     public secret = '';
 
-    applyToRequest(config: AxiosRequestConfig): AxiosRequestConfig {
+    async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         config.paramsSerializer = function (params) {
             return querystring.stringify(params);
         };
         const timestamp: string = (new Date().getTime() / 1000).toString();
         const resourcePath: string = new URL(config.url as string).pathname;
-        const queryString: string = unescape(querystring.stringify(config.params));
+        const queryString: string = decodeURIComponent(querystring.stringify(config.params));
         let bodyParam = '';
         if (config.data) {
             if (typeof config.data == 'string') {
@@ -1018,9 +1020,25 @@ export class GateApiV4Auth implements Authentication {
                 bodyParam = JSON.stringify(config.data);
             }
         }
-        const hashedPayload = crypto.createHash('sha512').update(bodyParam).digest('hex');
-        const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
-        const signature = crypto.createHmac('sha512', this.secret).update(signatureString).digest('hex');
+
+        let signature: string;
+        if (typeof window === 'undefined') {
+            // NodeJS environment
+            const crypto = await import('crypto');
+            const hashedPayload = crypto.createHash('sha512').update(bodyParam).digest('hex');
+            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            signature = crypto.createHmac('sha512', this.secret).update(signatureString).digest('hex');
+        } else {
+            // Browser environment
+            const crypto = await import('../utils/crypto');
+            const hashedPayload = (await crypto.createHash('sha512').update(bodyParam).digest('hex')) as string;
+            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            signature = (await crypto
+                .createHmac('sha512', this.secret)
+                .update(signatureString)
+                .digest('hex')) as string;
+        }
+
         (<any>Object).assign(config.headers, { KEY: this.key, Timestamp: timestamp, SIGN: signature });
         return config;
     }

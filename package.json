@@ -18,11 +18,12 @@
     "author": "GateIO",
     "license": "Unlicense",
     "dependencies": {
-        "axios": "^0.21.1",
         "@types/node": "^8.10.48",
+        "axios": "^0.21.1",
         "json-bigint": "^1.0.0"
     },
     "devDependencies": {
+        "@types/json-bigint": "^1.0.4",
         "@typescript-eslint/eslint-plugin": "^3.7.0",
         "@typescript-eslint/parser": "^3.7.0",
         "eslint": "^7.5.0",

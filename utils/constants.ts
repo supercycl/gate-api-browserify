@@ -1,4 +1,4 @@
-const ALGORITHM_TABLE = {
+const ALGORITHM_TABLE: Record<string, string> = {
     sha256: 'SHA-256',
     sha384: 'SHA-384',
     sha512: 'SHA-512',
