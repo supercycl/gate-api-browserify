@@ -485,6 +485,7 @@ import { UserSubRelation } from './userSubRelation';
 import { UserTotalAmount } from './userTotalAmount';
 import { WithdrawStatus } from './withdrawStatus';
 import { WithdrawalRecord } from './withdrawalRecord';
+import JSONBig from "json-bigint";
 
 /* tslint:disable:no-unused-variable */
 const primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any', 'bigint'];
@@ -1002,7 +1003,7 @@ export class GateApiV4Auth implements Authentication {
     public secret = '';
 
     async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
-        const timestamp = `${Date.now() / 1000}.toString()`;
+        const timestamp = `${Date.now() / 1000 | 0}`;
         const resourcePath: string = new URL(config.url as string).pathname;
         const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
@@ -1010,7 +1011,7 @@ export class GateApiV4Auth implements Authentication {
             if (typeof config.data == 'string') {
                 bodyParam = config.data;
             } else {
-                bodyParam = JSON.stringify(config.data);
+                bodyParam = JSONBig.stringify(config.data);
             }
         }
 

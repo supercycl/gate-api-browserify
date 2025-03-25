@@ -81,7 +81,7 @@ export class ApiClient {
         if (responseType.length > 0) {
             body = ObjectSerializer.deserialize(body, responseType);
         }
-        return { response, body: body };
+        return { response, body };
     }
 
     private async fetch(config: RequestConfig): Promise<Response> {
