@@ -1,5 +1,3 @@
-import { isBrowser } from '../utils/utils';
-
 export * from './accountBalance';
 export * from './accountDetail';
 export * from './accountDetailKey';
@@ -244,8 +242,6 @@ export * from './withdrawStatus';
 export * from './withdrawalRecord';
 
 import { AxiosRequestConfig } from 'axios';
-import querystring = require('querystring');
-import { URL } from 'url';
 
 import { AccountBalance } from './accountBalance';
 import { AccountDetail } from './accountDetail';
@@ -489,7 +485,6 @@ import { UserSubRelation } from './userSubRelation';
 import { UserTotalAmount } from './userTotalAmount';
 import { WithdrawStatus } from './withdrawStatus';
 import { WithdrawalRecord } from './withdrawalRecord';
-import crypto from 'crypto';
 
 /* tslint:disable:no-unused-variable */
 const primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any', 'bigint'];
@@ -1007,11 +1002,11 @@ export class GateApiV4Auth implements Authentication {
 
     async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         config.paramsSerializer = function (params) {
-            return querystring.stringify(params);
+            return new URLSearchParams(params).toString();
         };
         const timestamp: string = (new Date().getTime() / 1000).toString();
         const resourcePath: string = new URL(config.url as string).pathname;
-        const queryString: string = decodeURIComponent(querystring.stringify(config.params));
+        const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
         if (config.data) {
             if (typeof config.data == 'string') {

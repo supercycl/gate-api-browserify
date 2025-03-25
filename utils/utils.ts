@@ -45,7 +45,3 @@ export function concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
     ret.set(b, a.length);
     return ret;
 }
-
-export function isBrowser() {
-    return !(typeof window !== 'undefined' && typeof window.document !== 'undefined');
-}
