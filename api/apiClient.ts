@@ -20,7 +20,7 @@ export interface RequestConfig {
     method?: string;
     headers?: Record<string, string>;
     params?: Record<string, string>;
-    auth?: { username: string, password: string };
+    auth?: { username: string; password: string };
     responseType?: 'arraybuffer' | 'document' | 'json' | 'text' | 'stream';
     data?: any;
 }
@@ -81,25 +81,28 @@ export class ApiClient {
         if (responseType.length > 0) {
             body = ObjectSerializer.deserialize(body, responseType);
         }
-        return {response, body: body};
+        return { response, body: body };
     }
 
     private async fetch(config: RequestConfig): Promise<Response> {
         let url = config.url;
+        if (url === undefined) {
+            throw new Error('Invalid URL');
+        }
+
         if (config.params) {
-            const params = (config.params instanceof URLSearchParams)
-                ? config.params
-                : new URLSearchParams(config.params);
+            const params =
+                config.params instanceof URLSearchParams ? config.params : new URLSearchParams(config.params);
             const qs = params.toString();
             if (qs !== '') {
                 url = `${url}?${qs}`;
             }
         }
 
-        const request = new Request(url!, {
+        const request = new Request(url, {
             method: config.method ?? 'GET',
             headers: config.headers,
-            body: typeof config.data === 'string' ? config.data : JSONBig.stringify(config.data)
+            body: typeof config.data === 'string' ? config.data : JSONBig.stringify(config.data),
         });
 
         return fetch(request);

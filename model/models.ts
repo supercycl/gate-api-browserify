@@ -1,4 +1,4 @@
-import { RequestConfig } from "../api/apiClient";
+import { RequestConfig } from '../api/apiClient';
 
 export * from './accountBalance';
 export * from './accountDetail';
@@ -485,7 +485,6 @@ import { UserSubRelation } from './userSubRelation';
 import { UserTotalAmount } from './userTotalAmount';
 import { WithdrawStatus } from './withdrawStatus';
 import { WithdrawalRecord } from './withdrawalRecord';
-import { bytesToHex, createHash, createHmac, getUTCTimestamp, strToUtf8 } from "../api/utils";
 
 /* tslint:disable:no-unused-variable */
 const primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any', 'bigint'];
@@ -949,7 +948,7 @@ export class HttpBasicAuth implements Authentication {
             username: this.username,
             password: this.password,
         };
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -961,7 +960,7 @@ export class HttpBearerAuth implements Authentication {
             const accessToken = typeof this.accessToken === 'function' ? this.accessToken() : this.accessToken;
             config.headers['Authorization'] = 'Bearer ' + accessToken;
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -983,7 +982,7 @@ export class ApiKeyAuth implements Authentication {
                 config.headers['Cookie'] = this.paramName + '=' + encodeURIComponent(this.apiKey);
             }
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -994,7 +993,7 @@ export class OAuth implements Authentication {
         if (config && config.headers) {
             config.headers['Authorization'] = 'Bearer ' + this.accessToken;
         }
-        return config;
+        return Promise.resolve(config);
     }
 }
 
@@ -1003,7 +1002,7 @@ export class GateApiV4Auth implements Authentication {
     public secret = '';
 
     async applyToRequest(config: RequestConfig): Promise<RequestConfig> {
-        const timestamp: string = `${getUTCTimestamp()}`;
+        const timestamp = `${Date.now() / 1000}.toString()`;
         const resourcePath: string = new URL(config.url as string).pathname;
         const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
@@ -1015,13 +1014,24 @@ export class GateApiV4Auth implements Authentication {
             }
         }
 
-        const hashedPayload = bytesToHex(
-            new Uint8Array(await createHash('SHA-512', strToUtf8(bodyParam)))
-        );
-        const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
-        const signature = bytesToHex(
-            new Uint8Array(await createHmac('SHA-512', this.secret, signatureString))
-        );
+        let signature: string;
+        if (typeof window === 'undefined') {
+            // NodeJS environment
+            const crypto = await import('crypto');
+            const hashedPayload = crypto.createHash('sha512').update(bodyParam).digest('hex');
+            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            signature = crypto.createHmac('sha512', this.secret).update(signatureString).digest('hex');
+        } else {
+            // Browser environment
+            const crypto = await import('../utils/crypto');
+            const hashedPayload = (await crypto.createHash('sha512').update(bodyParam).digest('hex')) as string;
+            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            signature = (await crypto
+                .createHmac('sha512', this.secret)
+                .update(signatureString)
+                .digest('hex')) as string;
+        }
+
         (<any>Object).assign(config.headers, { KEY: this.key, Timestamp: timestamp, SIGN: signature });
         return config;
     }
