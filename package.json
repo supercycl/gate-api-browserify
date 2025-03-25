@@ -1,7 +1,7 @@
 {
-    "name": "gate-api",
+    "name": "gate-api-browserify",
     "version": "6.94.0",
-    "description": "NodeJS client for gate-api",
+    "description": "gate-api client supporting both browser and nodejs",
     "repository": "gateio/gateapi-nodejs",
     "main": "dist/api.js",
     "types": "dist/api.d.ts",
@@ -15,22 +15,22 @@
     "files": [
         "dist/**/*"
     ],
-    "author": "GateIO",
+    "author": "Parameta",
     "license": "Unlicense",
     "dependencies": {
-        "@types/node": "^8.10.48",
-        "axios": "^0.21.1",
+        "@types/node": "^8.10.66",
+        "axios": "^0.21.4",
         "json-bigint": "^1.0.0"
     },
     "devDependencies": {
         "@types/json-bigint": "^1.0.4",
-        "@typescript-eslint/eslint-plugin": "^3.7.0",
-        "@typescript-eslint/parser": "^3.7.0",
-        "eslint": "^7.5.0",
-        "eslint-config-prettier": "^6.11.0",
-        "eslint-plugin-prettier": "^3.1.4",
-        "prettier": "^2.0.5",
+        "@typescript-eslint/eslint-plugin": "^3.10.1",
+        "@typescript-eslint/parser": "^3.10.1",
+        "eslint": "^7.32.0",
+        "eslint-config-prettier": "^6.15.0",
+        "eslint-plugin-prettier": "^3.4.1",
+        "prettier": "^2.8.8",
         "rewire": "^3.0.2",
-        "typescript": "^3.7.9"
+        "typescript": "^3.9.10"
     }
 }

@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@types/node':
-        specifier: ^8.10.48
+        specifier: ^8.10.66
         version: 8.10.66
       axios:
-        specifier: ^0.21.1
+        specifier: ^0.21.4
         version: 0.21.4
       json-bigint:
         specifier: ^1.0.0
@@ -22,28 +22,28 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       '@typescript-eslint/eslint-plugin':
-        specifier: ^3.7.0
+        specifier: ^3.10.1
         version: 3.10.1(@typescript-eslint/parser@3.10.1(eslint@7.32.0)(typescript@3.9.10))(eslint@7.32.0)(typescript@3.9.10)
       '@typescript-eslint/parser':
-        specifier: ^3.7.0
+        specifier: ^3.10.1
         version: 3.10.1(eslint@7.32.0)(typescript@3.9.10)
       eslint:
-        specifier: ^7.5.0
+        specifier: ^7.32.0
         version: 7.32.0
       eslint-config-prettier:
-        specifier: ^6.11.0
+        specifier: ^6.15.0
         version: 6.15.0(eslint@7.32.0)
       eslint-plugin-prettier:
-        specifier: ^3.1.4
+        specifier: ^3.4.1
         version: 3.4.1(eslint-config-prettier@6.15.0(eslint@7.32.0))(eslint@7.32.0)(prettier@2.8.8)
       prettier:
-        specifier: ^2.0.5
+        specifier: ^2.8.8
         version: 2.8.8
       rewire:
         specifier: ^3.0.2
         version: 3.0.2
       typescript:
-        specifier: ^3.7.9
+        specifier: ^3.9.10
         version: 3.9.10
 
 packages:
