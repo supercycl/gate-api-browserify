@@ -7,10 +7,11 @@
     "types": "dist/api.d.ts",
     "scripts": {
         "clean": "rm -Rf node_modules/ *.js",
-        "build": "tsc",
+        "build": "rm -rf dist/ && tsc",
         "prepare": "npm run build",
         "format": "prettier --write '*/**/*.{js,ts,tsx}'",
-        "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix"
+        "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
+        "test": "jest"
     },
     "files": [
         "dist/**/*"
@@ -18,9 +19,12 @@
     "author": "Parameta",
     "license": "Unlicense",
     "dependencies": {
-        "axios": "^1.8.4",
+        "@jest/globals": "^29.7.0",
         "@types/node": "^22.13.13",
-        "json-bigint": "^1.0.0"
+        "axios": "^1.8.4",
+        "jest": "^29.7.0",
+        "json-bigint": "^1.0.0",
+        "ts-jest": "^29.3.0"
     },
     "devDependencies": {
         "@types/json-bigint": "^1.0.4",
