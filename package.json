@@ -1,8 +1,8 @@
 {
     "name": "gate-api-browserify",
-    "version": "6.94.0",
+    "version": "6.94.2",
     "description": "gate-api client supporting both browser and nodejs",
-    "repository": "gateio/gateapi-nodejs",
+    "repository": "https://github.com/supercycl/gate-api-browserify",
     "main": "dist/api.js",
     "types": "dist/api.d.ts",
     "scripts": {
@@ -18,8 +18,8 @@
     "author": "Parameta",
     "license": "Unlicense",
     "dependencies": {
+        "axios": "^1.8.4",
         "@types/node": "^8.10.66",
-        "axios": "^0.21.4",
         "json-bigint": "^1.0.0"
     },
     "devDependencies": {
