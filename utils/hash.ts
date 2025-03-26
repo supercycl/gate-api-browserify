@@ -2,7 +2,7 @@ import { bytesToHex, concatUint8Arrays, strToUtf8 } from './utils';
 import { convertHashName } from './constants';
 
 export class Hash {
-    private algorithm: string;
+    private readonly algorithm: string;
     private buf: Uint8Array = new Uint8Array();
 
     constructor(algorithm: string) {
