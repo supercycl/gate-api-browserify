@@ -1,6 +1,6 @@
 {
     "name": "gate-api-browserify",
-    "version": "6.94.2-1",
+    "version": "6.94.2-2",
     "description": "gate-api client supporting both browser and nodejs",
     "repository": "https://github.com/supercycl/gate-api-browserify",
     "main": "dist/api.js",
