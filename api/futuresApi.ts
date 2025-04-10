@@ -985,7 +985,7 @@ export class FuturesApi {
     public async getPosition(
         settle: 'btc' | 'usdt',
         contract: string,
-    ): Promise<{ response: AxiosResponse; body: Position }> {
+    ): Promise<{ response: AxiosResponse; body: Array<Position> }> {
         const localVarPath =
             this.client.basePath +
             '/futures/{settle}/positions/{contract}'
@@ -1019,7 +1019,14 @@ export class FuturesApi {
         };
 
         const authSettings = ['apiv4'];
-        return this.client.request<Position>(config, 'Position', authSettings);
+        const { response, body } = await this.client.request<Array<Position>>(config, '', authSettings);
+        if (Array.isArray(body)) {
+            const nBody = ObjectSerializer.deserialize(response.data, 'Array<Position>');
+            return {response: response, body: nBody};
+        } else {
+            const nBody = ObjectSerializer.deserialize(response.data, 'Position');
+            return {response: response, body: [nBody]};
+        }
     }
 
     /**
