@@ -157,6 +157,7 @@ export class Contract {
      * The factor for the maximum of the funding rate. Maximum of funding rate = (1/market maximum leverage - maintenance margin rate) * funding_cap_ratio
      */
     'fundingCapRatio'?: string;
+    'crossLeverageDefault'?: string;
 
     static discriminator: string | undefined = undefined;
 
@@ -339,6 +340,11 @@ export class Contract {
         {
             name: 'fundingCapRatio',
             baseName: 'funding_cap_ratio',
+            type: 'string',
+        },
+        {
+            name: 'crossLeverageDefault',
+            baseName: 'cross_leverage_default',
             type: 'string',
         },
     ];
