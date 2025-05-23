@@ -58,6 +58,15 @@ export class FuturesApi {
             this.client = new ApiClient();
         }
     }
+    public async getAuthHeader(
+        timestamp: string,
+        method: string,
+        path: string,
+        queryString: string,
+        data: string,
+    ): Promise<{ key: string; timestamp: string; sign: string }> {
+        return this.client.getAuthHeader(timestamp, method, path, queryString, data);
+    }
 
     /**
      *

@@ -88,4 +88,35 @@ export class ApiClient {
                 });
             });
     }
+
+    public async getAuthHeader(
+        timestamp: string,
+        method: string,
+        path: string,
+        queryString: string,
+        data: string,
+    ): Promise<{ key: string; timestamp: string; sign: string }> {
+        const auth = this.authentications['apiv4'] as GateApiV4Auth;
+        let signature: string;
+        if (typeof window === 'undefined') {
+            // NodeJS environment
+            const crypto = await import('crypto');
+            const hashedPayload = crypto.createHash('sha512').update(data).digest('hex');
+            const signatureString = [method, path, queryString, hashedPayload, timestamp].join('\n');
+            signature = crypto.createHmac('sha512', auth.secret).update(signatureString).digest('hex');
+        } else {
+            const crypto = await import('../utils/crypto');
+            const hashedPayload = (await crypto.createHash('sha512').update(data).digest('hex')) as string;
+            const signatureString = [method, path, queryString, hashedPayload, timestamp].join('\n');
+            signature = (await crypto
+                .createHmac('sha512', auth.secret)
+                .update(signatureString)
+                .digest('hex')) as string;
+        }
+        return {
+            key: auth.key,
+            timestamp,
+            sign: signature,
+        };
+    }
 }
