@@ -1,3 +1,5 @@
+import { getPathnameFromUrl } from '../utils/utils';
+
 export * from './accountBalance';
 export * from './accountDetail';
 export * from './accountDetailKey';
@@ -1005,7 +1007,7 @@ export class GateApiV4Auth implements Authentication {
             return new URLSearchParams(params).toString();
         };
         const timestamp: string = (new Date().getTime() / 1000).toString();
-        const resourcePath: string = new URL(config.url as string).pathname;
+        const resourcePath: string = getPathnameFromUrl(config.url as string);
         const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
         if (config.data) {
