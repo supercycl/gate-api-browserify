@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import * as process from 'process';
-import { FuturesApi } from '../api';
+import { ApiClient, FuturesApi } from '../api';
 
 const settle = 'usdt';
 const apiKey = process.env.NEXT_PUBLIC_GATEIO_API_KEY;
@@ -28,5 +28,29 @@ describe('FuturesApi', () => {
         expect(response.status).toBe(200);
         expect(body).toBeDefined();
         console.log(body);
+    });
+
+    test.skip('futuresFee()', async () => {
+        const client = new ApiClient();
+        client.setApiKeySecret(apiKey!, secret!);
+
+        const contracts = [
+            'BTC_USDT', 'ETH_USDT', 'SOL_USDT', 'ICX_USDT'
+        ];
+        const api = new FuturesApi(client);
+        try {
+            for (const contract of contracts) {
+                const { response, body } = await api.getFuturesFee('usdt', {
+                    contract
+                });
+
+                expect(response.status).toBe(200);
+                expect(body).toBeDefined();
+                // console.log(response);
+                console.log(JSON.stringify(body));
+            }
+        } catch (e) {
+            console.log(e);
+        }
     });
 })
