@@ -969,7 +969,7 @@ export class HttpBearerAuth implements Authentication {
 export class ApiKeyAuth implements Authentication {
     public apiKey = '';
 
-    constructor(private location: string, private paramName: string) {}
+    constructor(private location: string, private paramName: string) { }
 
     async applyToRequest(config: AxiosRequestConfig): Promise<AxiosRequestConfig> {
         if (this.location == 'query') {
@@ -1008,6 +1008,9 @@ export class GateApiV4Auth implements Authentication {
         };
         const timestamp: string = (new Date().getTime() / 1000).toString();
         const resourcePath: string = getPathnameFromUrl(config.url as string);
+        // Decode URL-encoded characters for signature generation
+        // Server expects decoded pathname (e.g., /positions/币安人生_USDT not /positions/%E5%B8%81...)
+        const decodedResourcePath = decodeURIComponent(resourcePath);
         const queryString: string = decodeURIComponent(new URLSearchParams(config.params).toString());
         let bodyParam = '';
         if (config.data) {
@@ -1023,13 +1026,13 @@ export class GateApiV4Auth implements Authentication {
             // NodeJS environment
             const crypto = await import('crypto');
             const hashedPayload = crypto.createHash('sha512').update(bodyParam).digest('hex');
-            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            const signatureString = [config.method, decodedResourcePath, queryString, hashedPayload, timestamp].join('\n');
             signature = crypto.createHmac('sha512', this.secret).update(signatureString).digest('hex');
         } else {
             // Browser environment
             const crypto = await import('../utils/crypto');
             const hashedPayload = (await crypto.createHash('sha512').update(bodyParam).digest('hex')) as string;
-            const signatureString = [config.method, resourcePath, queryString, hashedPayload, timestamp].join('\n');
+            const signatureString = [config.method, decodedResourcePath, queryString, hashedPayload, timestamp].join('\n');
             signature = (await crypto
                 .createHmac('sha512', this.secret)
                 .update(signatureString)
